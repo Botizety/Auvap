@@ -1,0 +1,118 @@
+# AUVAP Training Configuration
+
+# Environment Configuration
+environment:
+  name: "CyberBattleChain-v0"  # CBS environment name
+  topology: "chain"  # chain, mesh, custom
+  num_hosts: 5  # Number of hosts in network
+  max_steps_per_episode: 100
+
+# Neo4j Configuration
+neo4j:
+  enabled: true
+  uri: "bolt://localhost:7687"
+  username: "neo4j"
+  password: "auvap_password"
+  database: "neo4j"
+
+# Manager Agent Configuration
+manager:
+  observation_dim: 20
+  max_hosts: 10
+  default_budget: 6
+  budget_range: [3, 10]
+  decision_frequency: 10  # Steps between Manager decisions
+  
+  # Training
+  algorithm: "PPO"
+  learning_rate: 0.0003
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+
+# Worker Agent Configuration
+worker:
+  cbs_obs_dim: 50
+  ckg_feature_dim: 10
+  max_actions: 100
+  
+  # Training
+  algorithm: "PPO"
+  learning_rate: 0.0003
+  batch_size: 128
+  n_epochs: 10
+  gamma: 0.95
+
+# Reward Configuration
+rewards:
+  # Step rewards (DynPen-style)
+  step_rewards:
+    host_compromise_reward: 10.0
+    credential_reward: 5.0
+    discovery_reward: 2.0
+    invalid_action_penalty: -5.0
+    cost_multiplier: 1.0
+  
+  # Reward machine
+  reward_machine:
+    phase_transition_reward: 5.0
+    milestone_reward: 2.0
+    goal_achievement_reward: 20.0
+  
+  # Trajectory rewards
+  trajectory_rewards:
+    efficiency_weight: 0.4
+    coverage_weight: 0.3
+    stealth_weight: 0.2
+    goal_weight: 0.1
+
+# Training Configuration
+training:
+  total_episodes: 10000
+  eval_frequency: 100  # Evaluate every N episodes
+  save_frequency: 500  # Save checkpoint every N episodes
+  log_frequency: 10  # Log stats every N episodes
+  
+  # Checkpoints
+  checkpoint_dir: "checkpoints"
+  best_model_path: "checkpoints/best_model.zip"
+  
+  # Logging
+  log_dir: "logs"
+  tensorboard_log: "logs/tensorboard"
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 1000  # Episodes without improvement
+    min_improvement: 0.01
+
+# Action Masking Configuration
+action_masking:
+  enabled: true
+  use_ckg: true
+  scan_cooldown: 5  # Steps between rescans of same host
+
+# Explainability Configuration
+explainability:
+  enabled: true
+  log_decisions: true
+  log_explanations: true
+  generate_reports: true
+  report_frequency: 100  # Episodes
+
+# Evaluation Configuration
+evaluation:
+  num_episodes: 100
+  metrics:
+    - "success_rate"
+    - "steps_to_goal"
+    - "invalid_action_rate"
+    - "hosts_compromised"
+    - "goal_achievement_time"
+  
+  # Baselines to compare
+  baselines:
+    - "random"
+    - "flat_ppo"
+    - "dqn"

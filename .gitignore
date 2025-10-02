@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# Logs & Checkpoints
+logs/
+checkpoints/
+runs/
+*.log
+
+# Environment variables (IMPORTANT: Never commit!)
+.env
+.env.local
+.env.*.local
+
+# Neo4j
+neo4j-data/
+neo4j/
+
+# Training artifacts
+wandb/
+tensorboard/
+models/
+*.zip
+*.pth
+*.pt
+
+# Jupyter Notebooks (keep .ipynb but ignore checkpoints)
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Large files (should use Git LFS if needed)
+*.h5
+*.pkl
+*.pickle
+
+# Docker (if you create docker volumes)
+docker-compose.override.yml
+.dockerignore
