@@ -1,15 +1,38 @@
 # AUVAP Framework
-**Automated Vulnerability Assessment and Penetration Testing with Hierarchical Reinforcement Learning**
+
+![Python](https://img.shields.io/badge/Python-3.13-blue.svg)
+![Neo4j](https://img.shields.io/badge/Neo4j-5.x-brightgreen.svg)
+![CyberBattleSim](https://img.shields.io/badge/CyberBattleSim-Microsoft-blueviolet.svg)
+![Status](https://img.shields.io/badge/Status-Real%20Environment%20Verified-success.svg)
+
+> **AUVAP** (*Automated Vulnerability Assessment and Penetration Testing*) is a production-ready research framework that combines hierarchical reinforcement learning with a Neo4j knowledge graph on top of Microsoft CyberBattleSim.
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [System Architecture](#system-architecture)
+3. [Highlights](#highlights)
+4. [Getting Started](#getting-started)
+5. [Neo4j & Environment Setup](#neo4j--environment-setup)
+6. [Usage](#usage)
+7. [Documentation Map](#documentation-map)
+8. [Repository Layout](#repository-layout)
+9. [Tech Stack](#tech-stack)
+10. [Citation](#citation)
+11. [License](#license)
+12. [Support](#support)
 
 ## Overview
 
-AUVAP implements a novel approach to automated penetration testing using:
-- **Manager-Worker Hierarchical RL**: Decomposing complex penetration testing into sub-goals
-- **Cybersecurity Knowledge Graph (CKG)**: Neo4j-based graph for action masking and explainability
-- **Dual-Signal Reward System**: Combining step rewards with trajectory-level preference learning
-- **CyberBattleSim Integration**: Built on Microsoft's enterprise network simulation
+AUVAP delivers a full autonomous penetration-testing pipeline:
 
-## Architecture
+- **Manager-Worker Hierarchical RL** for task decomposition
+- **Cybersecurity Knowledge Graph (CKG)** in Neo4j for action masking, feature enrichment and explainability
+- **Dual-Signal Reward System** that blends instantaneous rewards with preference-based trajectory scoring
+- **Microsoft CyberBattleSim Integration** using the *real* environment APIs (no mocks)
+- **2025-ready Implementation** with Python 3.13, Gymnasium, Stable-Baselines3 2.7, and the latest Neo4j driver
+
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -39,159 +62,142 @@ AUVAP implements a novel approach to automated penetration testing using:
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Installation
+## Highlights
+
+- ✅ **Real CyberBattleSim integration** — verified with automated scripts (`scripts/verify_real.py`, `scripts/simple_proof.py`).
+- ✅ **Neo4j-backed intelligence** — action masks, strategic features, explainability, and persistence.
+- ✅ **Hierarchical RL agents** — Manager selects sub-goals, Worker executes valid actions only.
+- ✅ **Dual reward signals** — step-level DynPen rewards plus trajectory preference learning.
+- ✅ **Thorough documentation** — verification guides, data provenance, schema analysis, GitHub publishing instructions.
+
+## Getting Started
 
 ### Prerequisites
-- Python 3.8+
-- Neo4j 5.x (running locally or remote)
-- CUDA-compatible GPU (optional, for faster training)
 
-### Setup
+- Python 3.13 (other 3.11+ versions may work, but 3.13 is what we ship)
+- Git, Docker (for Neo4j), and PowerShell (commands below use PowerShell syntax)
 
-1. **Clone and navigate to the project:**
-```bash
-cd "c:\Users\kitti\OneDrive\เอกสาร\Cyber AUVAP"
-```
+### Clone & Environment
 
-2. **Create virtual environment:**
-```bash
-python -m venv venv
-.\venv\Scripts\activate
-```
+```powershell
+git clone https://github.com/Botizety/Auvap.git
+cd Auvap
 
-3. **Install dependencies:**
-```bash
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-4. **Setup Neo4j:**
-   - Install Neo4j Desktop or use Docker:
-   ```bash
-   docker run -d --name neo4j \
-     -p 7474:7474 -p 7687:7687 \
-     -e NEO4J_AUTH=neo4j/auvap_password \
+### Smoke Test
+
+```powershell
+python tests/test_setup.py
+```
+
+This confirms the real CyberBattleSim package is installed and usable.
+
+## Neo4j & Environment Setup
+
+1. **Launch Neo4j 5.x (Docker example):**
+
+   ```powershell
+   docker run -d --name neo4j-auvap ^
+     -p 7474:7474 -p 7687:7687 ^
+     -e NEO4J_AUTH=neo4j/auvap_password ^
      neo4j:5.12
    ```
-   - Create `.env` file:
-   ```
+
+2. **Create a `.env` file (never commit it):**
+
+   ```text
    NEO4J_URI=bolt://localhost:7687
    NEO4J_USER=neo4j
    NEO4J_PASSWORD=auvap_password
    ```
 
-5. **Verify installation:**
-```bash
-python tests/test_setup.py
+3. **(Optional) Load the default chain topology into Neo4j:**
+
+   ```powershell
+   python scripts/demo_neo4j_data.py --populate
+   ```
+
+   This script demonstrates data ingestion and can connect to a running Neo4j instance.
+
+## Usage
+
+| Goal | Command | Notes |
+|------|---------|-------|
+| Verify real CyberBattleSim integration | `python scripts/verify_real.py` | Runs six assertions proving we are using Microsoft’s environment. |
+| Quick visual sanity check | `python scripts/simple_proof.py` | Prints the real network topology (node IDs, vulnerabilities). |
+| Inspect Neo4j data pipeline | `python scripts/demo_neo4j_data.py` | Extracts topology, simulates discoveries, optionally pushes to Neo4j. |
+| Train hierarchical agents | `python scripts/train_auvap.py --config configs/chain_topology.yaml --episodes 100` | Adjust `--episodes`, `--env`, or config file as needed. |
+| Run the unit smoke test | `python tests/test_setup.py` | Verifies the CyberBattleSim API contract. |
+
+### Customising Training
+
+- Edit `configs/chain_topology.yaml` to change environment size, reward weights, or logging.
+- Pass `--env toyctf` to `train_auvap.py` to use the ToyCTF CyberBattleSim scenario.
+- Use `--use-neo4j` to enable knowledge-graph masking and feature extraction during training.
+
+### Knowledge Graph Operations
+
+Key APIs live in `src/knowledge_graph/ckg_manager.py` and leverage the schema defined in `src/knowledge_graph/ckg_schema.py`. Action masking, feature extraction, and explainability helpers are available via `src/knowledge_graph/action_masking.py` and `feature_extractor.py`.
+
+## Documentation Map
+
+| File | Purpose |
+|------|---------|
+| `HOW_TO_VERIFY_REAL.md` | Step-by-step proof that the project uses real CyberBattleSim. |
+| `NEO4J_DATA_SOURCE.md` | Deep dive into every data source feeding Neo4j. |
+| `NEO4J_DUTIES.md` | Explains how the knowledge graph powers masking, features, and explainability. |
+| `SCHEMA_2025_ANALYSIS.md` | Validates the Neo4j schema against 2025 industry standards (MITRE ATT&CK, CVE, UCO). |
+| `VERSION_STATUS_2025.md` | Confirms all dependencies are current as of October 2025. |
+| `QUICKSTART.md` | Punchy TL;DR for setup and training. |
+| `GITHUB_UPLOAD_GUIDE.md` & `QUICK_GITHUB_UPLOAD.md` | How this repository was published (handy if you fork). |
+
+## Repository Layout
+
 ```
-
-## Quick Start
-
-### Run a training session:
-```bash
-python scripts/train_auvap.py --config configs/chain_topology.yaml
-```
-
-### Evaluate a trained model:
-```bash
-python scripts/evaluate.py --model checkpoints/best_model.zip --episodes 100
-```
-
-### View explanations:
-```bash
-python scripts/explain_episode.py --episode logs/episode_42.json
-```
-
-## Project Structure
-
-```
-AUVAP/
+├── configs/                # Training configuration files
+├── scripts/                # Training, verification, and demo scripts
 ├── src/
-│   ├── environment/          # CyberBattleSim wrapper
-│   │   ├── cbs_wrapper.py
-│   │   └── state_manager.py
-│   ├── knowledge_graph/      # Neo4j CKG implementation
-│   │   ├── ckg_schema.py
-│   │   ├── ckg_manager.py
-│   │   └── action_masking.py
-│   ├── agents/               # Hierarchical RL agents
-│   │   ├── manager.py
-│   │   ├── worker.py
-│   │   └── hierarchical_env.py
-│   ├── rewards/              # Dual-signal reward system
-│   │   ├── step_rewards.py
-│   │   ├── trajectory_rewards.py
-│   │   └── reward_machines.py
-│   └── explainability/       # Explanation generation
-│       ├── path_extractor.py
-│       └── report_generator.py
-├── scripts/                  # Training & evaluation
-├── configs/                  # Configuration files
-├── tests/                    # Unit tests
-├── notebooks/                # Jupyter analysis notebooks
-└── docs/                     # Additional documentation
+│   ├── agents/             # Manager & Worker RL agents
+│   ├── environment/        # CyberBattleSim wrappers and state tracking
+│   ├── explainability/     # Path extraction & reporting helpers
+│   ├── knowledge_graph/    # Neo4j schema, manager, action masking, features
+│   └── rewards/            # Step and trajectory reward implementations
+├── tests/                  # Smoke tests for CyberBattleSim integration
+├── requirements.txt        # Python dependencies
+├── .env.example            # Example Neo4j credentials (safe to share)
+└── *.md                    # Documentation (see table above)
 ```
 
-## Key Components
+## Tech Stack
 
-### 1. Manager Agent
-- Selects high-level sub-goals: `reconnaissance`, `web_exploitation`, `privilege_escalation`, `pivoting`
-- Assigns targets and action budgets (e.g., "scan web tier, budget: 6 actions")
-- Monitors Worker progress and adjusts strategy
-
-### 2. Worker Agent
-- Executes CyberBattleSim actions: `local`, `remote`, `connect`
-- Guided by CKG features: CVSS scores, cost, noise, credential requirements
-- Respects Manager's budget and stop conditions
-
-### 3. Cybersecurity Knowledge Graph
-- **6 Entity Types**: Host, Service, SoftwareStack, VulnerabilityTechnique, Ability, Credential
-- **Action Masking**: Only valid actions presented to Worker
-- **Feature Extraction**: Per-action features (CVSS, cost, noise level)
-- **Explainability**: Generates reasoning paths (e.g., "Exploit X chosen because Service Y vulnerable via CVE Z")
-
-### 4. Dual-Signal Rewards
-- **Step Reward**: `max(0, result - cost)` (DynPen-style)
-- **Trajectory Reward**: Preference-trained `r_θ(τ)` for long-horizon quality
-- **Reward Machines**: Encode phase progression bonuses
-
-## Training Details
-
-- **Episodes**: 10,000+ for convergence
-- **Manager**: PPO with sub-goal action space (4 goals × target selection)
-- **Worker**: PPO/DQN with masked action space
-- **Metrics**: Steps-to-goal, success rate, invalid action %, explanation quality
-
-## Evaluation
-
-The framework tracks:
-- **Efficiency**: Steps to compromise all targets
-- **Success Rate**: % episodes reaching goal
-- **Validity**: % actions that are CKG-valid
-- **Explainability**: Human-readable reasoning paths
-
-## Research Paper Reference
-
-This implementation is based on the AUVAP research paper:
-- Manager-Worker hierarchical decomposition
-- CKG-based action masking and feature extraction
-- Dual-signal reward system with preference learning
-- Explanation path generation for interpretability
+- **Reinforcement Learning:** Gymnasium 0.29, Stable-Baselines3 2.7, PyTorch 2.x
+- **Cyber Range:** Microsoft CyberBattleSim (chain and toyctf scenarios)
+- **Knowledge Graph:** Neo4j 5.x (Bolt driver 6.0.2)
+- **Explainability:** Graph-based path tracing + human-readable reports
+- **Tooling:** Python 3.13, Docker, PowerShell, pytest, tqdm, loguru
 
 ## Citation
 
 ```bibtex
-@article{auvap2024,
-  title={AUVAP: Automated Vulnerability Assessment and Penetration Testing Framework with Hierarchical RL},
-  author={Your Name},
-  journal={Conference/Journal},
-  year={2024}
+@software{auvap2025,
+  author  = {Botizety},
+  title   = {AUVAP: Automated Vulnerability Assessment and Penetration Testing Framework},
+  year    = {2025},
+  url     = {https://github.com/Botizety/Auvap},
+  version = {1.0.0}
 }
 ```
 
 ## License
 
-MIT License - See LICENSE file for details
+Distributed under the [MIT License](LICENSE).
 
-## Contact
+## Support
 
-For questions or issues, please open a GitHub issue or contact the author.
+Open a [GitHub issue](https://github.com/Botizety/Auvap/issues) for bug reports or feature requests, or reach out via the contact details listed in the project documentation.
